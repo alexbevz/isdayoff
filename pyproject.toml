@@ -26,7 +26,7 @@ dependencies = [
     "httpx >= 0.28",
     "pydantic >= 2",
 ]
-urls = { Homepage = "https://github.com/alexbevz/isdayoff", Source = "https://github.com/alexbevz/isdayoff" }
+urls = { Homepage = "https://github.com/asbevz/isdayoff", Source = "https://github.com/asbevz/isdayoff" }
 
 [tool.hatch.build.targets.sdist]
 include = ["/isdayoff", "/tests"]
@@ -43,3 +43,6 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: tests that hit the real isdayoff.ru API",
+]
