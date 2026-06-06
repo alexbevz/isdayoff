@@ -27,6 +27,8 @@ _LOCALES = ("ru", "kz", "by", "us", "uz", "tr", "lv")
 class ProdCalendarParams(BaseModel):
     """Validated parameters for ProdCalendar API methods."""
 
+    model_config = {"extra": "forbid"}
+
     locale: str | None = None
     pre: bool = False
     sd: bool = False

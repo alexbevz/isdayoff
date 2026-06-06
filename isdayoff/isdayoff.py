@@ -10,11 +10,12 @@ from .typingapi import (
     DateType,
     ProdCalendarParams,
     ServiceNotRespond,
+    _LOCALES,
 )
 
-_LOCALES = ("ru", "kz", "by", "us", "uz", "tr", "lv")
 _DELIMITER = "%7C"
 _FORMAT_DATE = "%Y%m%d"
+__version__ = "1.1.0"
 
 
 # ── shared helpers ───────────────────────────────────────────────────────────
@@ -49,8 +50,6 @@ def _build_params(locale: str, **kwargs: Any) -> dict[str, Any]:
 class ProdCalendar:
     """Async production calendar client using httpx.AsyncClient."""
 
-    __version__ = "1.0.2"
-
     def __init__(
         self,
         locale: str = "ru",
@@ -67,7 +66,7 @@ class ProdCalendar:
             self._client = httpx.AsyncClient(
                 headers={
                     "User-Agent": (
-                        f"isdayoff/{self.__version__} "
+                        f"isdayoff/{__version__} "
                         "Contact: wg7831@gmail.com"
                     )
                 },
@@ -163,7 +162,7 @@ class ProdCalendar:
 
     @staticmethod
     def is_leap(date: datetime.date) -> bool:
-        return date.year % 4 == 0 and date.year % 100 != 0 or date.year % 400 == 0
+        return (date.year % 4 == 0 and date.year % 100 != 0) or (date.year % 400 == 0)
 
     async def close(self) -> None:
         if self._client is not None and not self._client.is_closed:
@@ -188,8 +187,6 @@ class ProdCalendar:
 class SyncProdCalendar:
     """Sync production calendar client using httpx.Client."""
 
-    __version__ = "1.0.2"
-
     def __init__(
         self,
         locale: str = "ru",
@@ -206,7 +203,7 @@ class SyncProdCalendar:
             self._client = httpx.Client(
                 headers={
                     "User-Agent": (
-                        f"isdayoff/{self.__version__} "
+                        f"isdayoff/{__version__} "
                         "Contact: wg7831@gmail.com"
                     )
                 },
@@ -300,7 +297,7 @@ class SyncProdCalendar:
 
     @staticmethod
     def is_leap(date: datetime.date) -> bool:
-        return date.year % 4 == 0 and date.year % 100 != 0 or date.year % 400 == 0
+        return (date.year % 4 == 0 and date.year % 100 != 0) or (date.year % 400 == 0)
 
     def close(self) -> None:
         if self._client is not None and not self._client.is_closed:

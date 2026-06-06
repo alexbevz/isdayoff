@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import datetime
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import patch
 
-import httpx
 import pytest
 
 from isdayoff import DateType, ProdCalendar, SyncProdCalendar
 from isdayoff.typingapi import DataError, ServiceNotRespond
-
-
-# ── fixtures ─────────────────────────────────────────────────────────────────
 
 
 @pytest.fixture
@@ -21,14 +17,6 @@ def calendar() -> ProdCalendar:
 @pytest.fixture
 def sync_calendar() -> SyncProdCalendar:
     return SyncProdCalendar(locale="ru")
-
-
-# ── helper: mock httpx response ──────────────────────────────────────────────
-
-
-def _mock_httpx_response(text: str = "0", status_code: int = 200) -> httpx.Response:
-    """Build a minimal httpx.Response with the given text/status."""
-    return httpx.Response(status_code=status_code, text=text)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -166,6 +154,14 @@ class TestProdCalendar:
         with patch.object(calendar, "_get", return_value="0") as mock_get:
             result = await calendar.today(pre=True, sd=True, covid=True)
         assert result == DateType.WORKING
+        # Verify kwargs were forwarded to _get
+        mock_get.assert_awaited_once()
+        # Check params contain the expected keys
+        _call_args, call_kwargs = mock_get.await_args
+        params = call_kwargs.get("params", {})
+        assert params.get("pre") == 1
+        assert params.get("sd") == 1
+        assert params.get("covid") == 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -289,6 +285,13 @@ class TestSyncProdCalendar:
         with patch.object(sync_calendar, "_get", return_value="0") as mock_get:
             result = sync_calendar.today(pre=True, sd=True, covid=True)
         assert result == DateType.WORKING
+        # Verify kwargs were forwarded to _get
+        mock_get.assert_called_once()
+        _call_args, call_kwargs = mock_get.call_args
+        params = call_kwargs.get("params", {})
+        assert params.get("pre") == 1
+        assert params.get("sd") == 1
+        assert params.get("covid") == 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
