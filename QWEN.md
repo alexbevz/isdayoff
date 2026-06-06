@@ -4,10 +4,10 @@
 
 **isdayoff** — Python-библиотека для проверки даты на принадлежность к рабочему/нерабочему дню согласно официальным производственным календарям. Тонкий клиент для API [isdayoff.ru](https://isdayoff.ru).
 
-**Автор:** Максим Кобылинский (wg7831@gmail.com)
+**Автор:** Aleksandr Bevz (as-bivz@yandex.ru)
 **Лицензия:** MIT
-**Репозиторий:** https://github.com/kobylinsky-m/isdayoff
-**PyPI:** https://pypi.org/project/isdayoff/
+**Репозиторий:** https://github.com/alexbevz/isdayoff
+**PyPI:** https://pypi.org/project/isdayoff-api/
 
 ---
 
@@ -102,7 +102,7 @@ pytest-asyncio >= 0.24
 ## Установка и запуск
 
 ```bash
-pip install isdayoff
+pip install isdayoff-api
 
 # или для разработки:
 uv sync

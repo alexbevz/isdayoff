@@ -10,7 +10,7 @@ Official API website — https://isdayoff.ru
 ## Install
 
 ```bash
-pip install isdayoff
+pip install isdayoff-api
 ```
 
 Requires Python 3.11+.
