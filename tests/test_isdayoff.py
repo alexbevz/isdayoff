@@ -325,3 +325,67 @@ class TestCommon:
         assert cal.locale == "tr"
         cal2 = SyncProdCalendar(locale="uz")
         assert cal2.locale == "uz"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Integration tests (real API — opt-in)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.integration
+class TestAsyncProdCalendarIntegration:
+    """Integration tests for ProdCalendar with real API."""
+
+    @pytest.mark.asyncio
+    async def test_today_returns_valid_type(self) -> None:
+        async with ProdCalendar(locale="ru") as cal:
+            result = await cal.today()
+        assert isinstance(result, DateType)
+
+    @pytest.mark.asyncio
+    async def test_new_year_is_not_working(self) -> None:
+        async with ProdCalendar(locale="ru") as cal:
+            result = await cal.date(datetime.date(2024, 1, 1))
+        assert result == DateType.NOT_WORKING
+
+    @pytest.mark.asyncio
+    async def test_month_returns_all_days(self) -> None:
+        async with ProdCalendar(locale="ru") as cal:
+            result = await cal.month(datetime.date(2024, 1, 1))
+        assert len(result) == 31
+
+    @pytest.mark.asyncio
+    async def test_all_locales_respond(self) -> None:
+        locales = ("ru", "kz", "by", "us", "uz", "tr", "lv")
+        for loc in locales:
+            async with ProdCalendar(locale=loc) as cal:
+                result = await cal.today()
+            assert isinstance(result, DateType), f"Failed for locale {loc}"
+
+    @pytest.mark.asyncio
+    async def test_range_date(self) -> None:
+        async with ProdCalendar(locale="ru") as cal:
+            result = await cal.range_date(
+                datetime.date(2024, 1, 1), datetime.date(2024, 1, 7),
+            )
+        assert len(result) == 7
+
+
+@pytest.mark.integration
+class TestSyncProdCalendarIntegration:
+    """Integration tests for SyncProdCalendar with real API."""
+
+    def test_today_returns_valid_type(self) -> None:
+        with SyncProdCalendar(locale="ru") as cal:
+            result = cal.today()
+        assert isinstance(result, DateType)
+
+    def test_new_year_is_not_working(self) -> None:
+        with SyncProdCalendar(locale="ru") as cal:
+            result = cal.date(datetime.date(2024, 1, 1))
+        assert result == DateType.NOT_WORKING
+
+    def test_month_returns_all_days(self) -> None:
+        with SyncProdCalendar(locale="ru") as cal:
+            result = cal.month(datetime.date(2024, 1, 1))
+        assert len(result) == 31
