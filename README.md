@@ -8,8 +8,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/isdayoff-api?color=blue&style=flat-square)](https://pypi.org/project/isdayoff-api/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/isdayoff-api?color=blue&style=flat-square)](https://pypi.org/project/isdayoff-api/)
 [![GitHub License](https://img.shields.io/github/license/asbevz/isdayoff?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-48%20passed-green?style=flat-square)](tests/)
-[![Code style](https://img.shields.io/badge/code%20style-ruff-black?style=flat-square)](https://github.com/astral-sh/ruff)
+[![CI](https://github.com/asbevz/isdayoff/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/asbevz/isdayoff/actions/workflows/ci.yml)
 
 🐍 **Async** + **Sync** Python client for [isdayoff.ru](https://isdayoff.ru) – production calendar data for 7 countries.
 
