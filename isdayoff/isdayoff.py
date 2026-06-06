@@ -1,122 +1,319 @@
+from __future__ import annotations
+
 import datetime
-from functools import wraps
-from typing import Dict, List, NoReturn
+from typing import Any
 
-import aiohttp
+import httpx
 
-from .typingapi import DataError, DateType, ParamsApi, ServiceNotRespond
+from .typingapi import (
+    DataError,
+    DateType,
+    ProdCalendarParams,
+    ServiceNotRespond,
+)
+
+_LOCALES = ("ru", "kz", "by", "us", "uz", "tr", "lv")
+_DELIMITER = "%7C"
+_FORMAT_DATE = "%Y%m%d"
+
+
+# ── shared helpers ───────────────────────────────────────────────────────────
+
+
+def _validate_locale(locale: str) -> str:
+    if locale not in _LOCALES:
+        msg = f"locale must be one of {_LOCALES}, got {locale!r}"
+        raise ValueError(msg)
+    return locale
+
+
+def _format_result(
+    date_format: str, date: datetime.date, result: list[str]
+) -> dict[str, DateType]:
+    return {
+        (date + datetime.timedelta(days=day)).strftime(date_format): DateType(int(value))
+        for day, value in enumerate(result)
+    }
+
+
+def _build_params(locale: str, **kwargs: Any) -> dict[str, Any]:
+    params = ProdCalendarParams(**kwargs)
+    api_params = params.to_api_params()
+    api_params.setdefault("cc", locale)
+    return api_params
+
+
+# ── async client ─────────────────────────────────────────────────────────────
 
 
 class ProdCalendar:
-	LOCALES = ('ru', 'ua', 'kz', 'by', 'us')
-	DELIMETER = '%7C'
-	_FORMAT_DATE = '%Y%m%d'
-	__version__ = 1.0
-	
-	def __init__(self, 
-		locale: str = 'ru',
-		base_url: str = 'https://isdayoff.ru',
-		format_date: str = '%Y.%m.%d'
-	) -> NoReturn:
-		self.format_date = format_date
-		self.locale = self._is_valid_locale(locale)
-		self.base_url = base_url
-		self._session = aiohttp.ClientSession(
-			headers={
-				'User-Agent': f'python/{self.__version__} Contact with the developer by email - wg7831@gmail.com'
-			}
-		)	
+    """Async production calendar client using httpx.AsyncClient."""
 
-	async def _get(self, url, *args, **kwargs):
-		async with self._session.get(self.base_url + url, ssl=False, *args, **kwargs) as response:
-			if response.status == 400:
-				raise DataError('Date error') 
-			if response.status != 200:
-				raise ServiceNotRespond('No data found')
-			return await response.text(encoding='UTF-8')
+    __version__ = "1.0.0"
 
-	def _is_valid_locale(self, locale):
-		if locale not in self.LOCALES:
-			raise ValueError(f'locale must be in {self.LOCALES}')
-		return locale
+    def __init__(
+        self,
+        locale: str = "ru",
+        base_url: str = "https://isdayoff.ru",
+        date_format: str = "%Y-%m-%d",
+    ) -> None:
+        self.date_format = date_format
+        self.locale = _validate_locale(locale)
+        self.base_url = base_url.rstrip("/")
+        self._client: httpx.AsyncClient | None = None
 
-	def _filter_dict(self, dict_: dict):
-		return {key:value for key, value in dict_.items() if value}
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                headers={
+                    "User-Agent": (
+                        f"isdayoff/{self.__version__} "
+                        "Contact: wg7831@gmail.com"
+                    )
+                },
+            )
+        return self._client
 
-	def format_result(self, date: datetime.date, result: List[str]):
-		return {
-			(date + datetime.timedelta(days=day)).strftime(self.format_date): DateType(int(value))
-			for day, value in zip(range(0, len(result)), result)
-		}
+    async def _get(
+        self, url: str, params: dict[str, Any] | None = None
+    ) -> str:
+        client = await self._get_client()
+        response = await client.get(self.base_url + url, params=params)
+        if response.status_code == 400:
+            raise DataError("Date error")
+        if response.status_code != 200:
+            raise ServiceNotRespond("No data found")
+        return response.text
 
-	def result_date_type(f):
-		@wraps(f)
-		async def wrapper(*args, **kwargs):
-			return DateType(int(await f(*args, **kwargs)))
-		return wrapper
+    async def _get_date_work(
+        self,
+        data: datetime.date,
+        is_day: bool = True,
+        is_month: bool = True,
+        **kwargs: Any,
+    ) -> str:
+        params = _build_params(self.locale, **kwargs)
+        params["year"] = data.year
+        if is_month:
+            params["month"] = data.month
+        if is_day:
+            params["day"] = data.day
+        if not (is_month and is_day):
+            params["delimeter"] = _DELIMITER
+        return await self._get("/api/getdata", params=params)
 
-	async def _get_date_work(self, 
-		data: datetime.date, 
-		is_day=True, is_month=True, 
-		locale=False, pre=False, sd=False, covid=False
-	) -> str:
-		return await self._get(
-			'/api/getdata',
-			params=self._filter_dict({
-				'year': data.year,
-				'month': is_month and data.month,
-				'day': is_day and data.day,
-				'delimeter': not (is_month and is_day) and self.DELIMETER,
-				'cc': self._is_valid_locale(locale if locale else self.locale),
-				'pre': int(pre),
-				'sd': int(sd),
-				'covid': int(covid)
-			})
-		)
-	
-	async def _get_range_date_work(self, 
-		start_date: datetime.date, end_date: datetime.date, 
-		locale=False, pre=False, sd=False, covid=False
-	) -> str:
-		return await self._get(
-			'/api/getdata',
-			params=self._filter_dict({
-				'date1': start_date.strftime(self._FORMAT_DATE),
-				'date2': end_date.strftime(self._FORMAT_DATE),
-				'delimeter': self.DELIMETER,
-				'cc': self._is_valid_locale(locale if locale else self.locale),
-				'pre': int(pre),
-				'sd': int(sd),
-				'covid': int(covid)
-			})
-		)
+    async def _get_range_date_work(
+        self,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        **kwargs: Any,
+    ) -> str:
+        params = _build_params(self.locale, **kwargs)
+        params["date1"] = start_date.strftime(_FORMAT_DATE)
+        params["date2"] = end_date.strftime(_FORMAT_DATE)
+        params["delimeter"] = _DELIMITER
+        return await self._get("/api/getdata", params=params)
 
-	async def range_date(self, start_date: datetime.date, end_date: datetime.date, **kwargs: ParamsApi) -> Dict[str, DateType]:
-		result = (await self._get_range_date_work(start_date, end_date, **kwargs)).split(self.DELIMETER)
-		return self.format_result(datetime.date(start_date.year, start_date.month, start_date.day), result)
+    async def _get_date_as_type(
+        self, date: datetime.date, **kwargs: Any
+    ) -> DateType:
+        raw = await self._get_date_work(date, **kwargs)
+        return DateType(int(raw))
 
-	async def month(self, date: datetime.date, **kwargs: ParamsApi) -> Dict[str, DateType]:
-		result = (await self._get_date_work(date, is_day=False, **kwargs)).split(self.DELIMETER)
-		return self.format_result(datetime.date(date.year, date.month, 1), result)
+    async def range_date(
+        self,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        **kwargs: Any,
+    ) -> dict[str, DateType]:
+        result = (await self._get_range_date_work(start_date, end_date, **kwargs)).split(
+            _DELIMITER,
+        )
+        return _format_result(self.date_format, start_date, result)
 
-	async def year(self, date: datetime.date, **kwargs: ParamsApi) -> Dict[str, DateType]:
-		result = (await self._get_date_work(date, is_day=False, is_month=False, **kwargs)).split(self.DELIMETER)
-		return self.format_result(datetime.date(date.year, 1, 1), result)
+    async def month(
+        self, date: datetime.date, **kwargs: Any
+    ) -> dict[str, DateType]:
+        result = (
+            await self._get_date_work(date, is_day=False, **kwargs)
+        ).split(_DELIMITER)
+        return _format_result(
+            self.date_format, datetime.date(date.year, date.month, 1), result,
+        )
 
-	@result_date_type
-	async def date(self, date: datetime, **kwargs: ParamsApi) -> DateType:
-		return await self._get_date_work(date, **kwargs)
+    async def year(
+        self, date: datetime.date, **kwargs: Any
+    ) -> dict[str, DateType]:
+        result = (
+            await self._get_date_work(date, is_day=False, is_month=False, **kwargs)
+        ).split(_DELIMITER)
+        return _format_result(self.date_format, datetime.date(date.year, 1, 1), result)
 
-	@result_date_type
-	async def tomorrow(self, **kwargs: ParamsApi) -> DateType:
-		return await self._get_date_work((datetime.datetime.now() + datetime.timedelta(days=1)), **kwargs)
+    async def date(self, date: datetime.date, **kwargs: Any) -> DateType:
+        return await self._get_date_as_type(date, **kwargs)
 
-	@result_date_type
-	async def today(self, **kwargs: ParamsApi) -> DateType:
-		return await self._get_date_work(datetime.datetime.now(), **kwargs)
+    async def tomorrow(self, **kwargs: Any) -> DateType:
+        return await self._get_date_as_type(
+            datetime.date.today() + datetime.timedelta(days=1),
+            **kwargs,
+        )
 
-	def is_leap(self, date: datetime.date) -> bool:
-		return date.year % 4 == 0 and date.year % 100 != 0 or date.year % 400 == 0
-	
-	async def close(self) -> NoReturn:
-		await self._session.close()
+    async def today(self, **kwargs: Any) -> DateType:
+        return await self._get_date_as_type(datetime.date.today(), **kwargs)
+
+    @staticmethod
+    def is_leap(date: datetime.date) -> bool:
+        return date.year % 4 == 0 and date.year % 100 != 0 or date.year % 400 == 0
+
+    async def close(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+
+    async def __aenter__(self) -> ProdCalendar:
+        await self._get_client()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
+        await self.close()
+
+
+# ── sync client ──────────────────────────────────────────────────────────────
+
+
+class SyncProdCalendar:
+    """Sync production calendar client using httpx.Client."""
+
+    __version__ = "1.0.0"
+
+    def __init__(
+        self,
+        locale: str = "ru",
+        base_url: str = "https://isdayoff.ru",
+        date_format: str = "%Y-%m-%d",
+    ) -> None:
+        self.date_format = date_format
+        self.locale = _validate_locale(locale)
+        self.base_url = base_url.rstrip("/")
+        self._client: httpx.Client | None = None
+
+    def _get_client(self) -> httpx.Client:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(
+                headers={
+                    "User-Agent": (
+                        f"isdayoff/{self.__version__} "
+                        "Contact: wg7831@gmail.com"
+                    )
+                },
+            )
+        return self._client
+
+    def _get(
+        self, url: str, params: dict[str, Any] | None = None
+    ) -> str:
+        client = self._get_client()
+        response = client.get(self.base_url + url, params=params)
+        if response.status_code == 400:
+            raise DataError("Date error")
+        if response.status_code != 200:
+            raise ServiceNotRespond("No data found")
+        return response.text
+
+    def _get_date_work(
+        self,
+        data: datetime.date,
+        is_day: bool = True,
+        is_month: bool = True,
+        **kwargs: Any,
+    ) -> str:
+        params = _build_params(self.locale, **kwargs)
+        params["year"] = data.year
+        if is_month:
+            params["month"] = data.month
+        if is_day:
+            params["day"] = data.day
+        if not (is_month and is_day):
+            params["delimeter"] = _DELIMITER
+        return self._get("/api/getdata", params=params)
+
+    def _get_range_date_work(
+        self,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        **kwargs: Any,
+    ) -> str:
+        params = _build_params(self.locale, **kwargs)
+        params["date1"] = start_date.strftime(_FORMAT_DATE)
+        params["date2"] = end_date.strftime(_FORMAT_DATE)
+        params["delimeter"] = _DELIMITER
+        return self._get("/api/getdata", params=params)
+
+    def _get_date_as_type(
+        self, date: datetime.date, **kwargs: Any
+    ) -> DateType:
+        raw = self._get_date_work(date, **kwargs)
+        return DateType(int(raw))
+
+    def range_date(
+        self,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        **kwargs: Any,
+    ) -> dict[str, DateType]:
+        result = self._get_range_date_work(start_date, end_date, **kwargs).split(
+            _DELIMITER,
+        )
+        return _format_result(self.date_format, start_date, result)
+
+    def month(
+        self, date: datetime.date, **kwargs: Any
+    ) -> dict[str, DateType]:
+        result = self._get_date_work(date, is_day=False, **kwargs).split(_DELIMITER)
+        return _format_result(
+            self.date_format, datetime.date(date.year, date.month, 1), result,
+        )
+
+    def year(
+        self, date: datetime.date, **kwargs: Any
+    ) -> dict[str, DateType]:
+        result = self._get_date_work(
+            date, is_day=False, is_month=False, **kwargs
+        ).split(_DELIMITER)
+        return _format_result(self.date_format, datetime.date(date.year, 1, 1), result)
+
+    def date(self, date: datetime.date, **kwargs: Any) -> DateType:
+        return self._get_date_as_type(date, **kwargs)
+
+    def tomorrow(self, **kwargs: Any) -> DateType:
+        return self._get_date_as_type(
+            datetime.date.today() + datetime.timedelta(days=1),
+            **kwargs,
+        )
+
+    def today(self, **kwargs: Any) -> DateType:
+        return self._get_date_as_type(datetime.date.today(), **kwargs)
+
+    @staticmethod
+    def is_leap(date: datetime.date) -> bool:
+        return date.year % 4 == 0 and date.year % 100 != 0 or date.year % 400 == 0
+
+    def close(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            self._client.close()
+
+    def __enter__(self) -> SyncProdCalendar:
+        self._get_client()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
+        self.close()
