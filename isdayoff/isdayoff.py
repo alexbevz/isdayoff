@@ -49,7 +49,7 @@ def _build_params(locale: str, **kwargs: Any) -> dict[str, Any]:
 class ProdCalendar:
     """Async production calendar client using httpx.AsyncClient."""
 
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def __init__(
         self,
@@ -188,7 +188,7 @@ class ProdCalendar:
 class SyncProdCalendar:
     """Sync production calendar client using httpx.Client."""
 
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
     def __init__(
         self,

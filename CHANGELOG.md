@@ -5,43 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-06-06
+
+### Changed
+- Documentation fully translated to English
+- README badges and modern formatting
+
 ## [1.0.0] — 2026-06-06
 
-Форк оригинального `isdayoff` (автор: Максим Кобылинский). Полная модернизация проекта.
+Fork of the original `isdayoff` by Maxim Kobylinsky. Complete modernization of the project.
 
 ### Added
-- Синхронный клиент `SyncProdCalendar` на `httpx.Client`
-- Асинхронный контекстный менеджер (`async with ProdCalendar()`)
-- Синхронный контекстный менеджер (`with SyncProdCalendar()`)
-- Валидация параметров через `pydantic.BaseModel` (`ProdCalendarParams`)
-- 40 модульных тестов (pytest + unittest.mock)
-- 8 интеграционных тестов (реальное API, `@pytest.mark.integration`)
-- Поддержка Python 3.11–3.13
+- Sync client `SyncProdCalendar` using `httpx.Client`
+- Async context manager (`async with ProdCalendar()`)
+- Sync context manager (`with SyncProdCalendar()`)
+- Parameter validation via `pydantic.BaseModel` (`ProdCalendarParams`)
+- 40 unit tests (pytest + unittest.mock)
+- 8 integration tests (real API, `@pytest.mark.integration`)
+- Python 3.11–3.13 support
 - CHANGELOG.md
 
 ### Changed
-- **Переход на `httpx`** — замена `aiohttp` на `httpx` (async + sync в одном пакете)
-- **Переход на `pyproject.toml`** — удалены `setup.py` и `requirements.txt`, сборка через hatchling
-- **Менеджер зависимостей** — `uv` вместо `pip`
-- **Формат дат** — по умолчанию ISO 8601 (`%Y-%m-%d`) вместо `%Y.%m.%d`
-- **Даты через `datetime.date.today()`** вместо `datetime.datetime.now()`
-- **Ленивая HTTP-сессия** — клиент создаётся при первом запросе
-- **Системный SSL** — удалён небезопасный `ssl=False`
+- **Switched to `httpx`** — replaced `aiohttp` with `httpx` (async + sync in one package)
+- **Switched to `pyproject.toml`** — removed `setup.py` and `requirements.txt`, build via hatchling
+- **Dependency management** — `uv` instead of `pip`
+- **Date format** — defaults to ISO 8601 (`%Y-%m-%d`) instead of `%Y.%m.%d`
+- **Dates via `datetime.date.today()`** instead of `datetime.datetime.now()`
+- **Lazy HTTP session** — client created on first request
+- **System SSL** — removed insecure `ssl=False`
 
 ### Removed
-- Зависимости: `aiohttp`, `typing-extensions`, `idna-ssl`
-- Устаревшие паттерны asyncio (`get_event_loop().run_forever()`)
+- Dependencies: `aiohttp`, `typing-extensions`, `idna-ssl`
+- Deprecated asyncio patterns (`get_event_loop().run_forever()`)
 
 ### Fixed
-- `__init__` и `close()` теперь возвращают `None`, а не `NoReturn`
-- Версия приведена к PEP 440 (`"1.0.0"` вместо `1.0`)
+- `__init__` and `close()` now return `None`, not `NoReturn`
+- Version follows PEP 440 (`"1.0.0"` instead of `1.0`)
 
 ### Locales
-- Удалена: `ua` (не поддерживается API)
-- Добавлены: `uz` (Узбекистан), `tr` (Турция), `lv` (Латвия)
+- Removed: `ua` (not supported by API)
+- Added: `uz` (Uzbekistan), `tr` (Turkey), `lv` (Latvia)
 
 ---
 
-## [1.0.0] — оригинальный релиз
+## Original release
 
-Оригинальная версия от Максима Кобылинского (`kobylinsky-m/isdayoff`).
+The original `isdayoff` package was created by [Maxim Kobylinsky](https://github.com/kobylinsky-m/isdayoff).

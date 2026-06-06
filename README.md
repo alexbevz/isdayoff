@@ -2,7 +2,7 @@
 
 # 🗓️ isdayoff-api
 
-**Production Calendar API Client** · *Проверка дат на рабочие/нерабочие дни*
+**Production Calendar API Client**
 
 [![PyPI - Version](https://img.shields.io/pypi/v/isdayoff-api?color=blue&style=flat-square)](https://pypi.org/project/isdayoff-api/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/isdayoff-api?color=blue&style=flat-square)](https://pypi.org/project/isdayoff-api/)
@@ -11,25 +11,29 @@
 [![Tests](https://img.shields.io/badge/tests-48%20passed-green?style=flat-square)](tests/)
 [![Code style](https://img.shields.io/badge/code%20style-ruff-black?style=flat-square)](https://github.com/astral-sh/ruff)
 
-🐍 **Async** + **Sync** клиент для [isdayoff.ru](https://isdayoff.ru) – данные по производственным календарям 7 стран.
+🐍 **Async** + **Sync** Python client for [isdayoff.ru](https://isdayoff.ru) – production calendar data for 7 countries.
+
+Check if a date is a working day, a day off, or a shortened day according to official government decrees.
+
+> This is a fork of the original [kobylinsky-m/isdayoff](https://github.com/kobylinsky-m/isdayoff).
 
 </div>
 
 ---
 
-## 📦 Установка
+## 📦 Installation
 
 ```bash
 pip install isdayoff-api
 ```
 
-Требуется **Python 3.11+**.
+Requires **Python 3.11+**.
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-### Async (рекомендуется)
+### Async (recommended)
 
 ```python
 import asyncio
@@ -62,34 +66,34 @@ with SyncProdCalendar(locale="us") as calendar:
 
 ---
 
-## 🌍 Поддерживаемые локали
+## 🌍 Supported Locales
 
-| Флаг | Код | Страна |
-|------|------|--------|
-| 🇷🇺 | `ru` | Россия |
-| 🇰🇿 | `kz` | Казахстан |
-| 🇧🇾 | `by` | Беларусь |
-| 🇺🇸 | `us` | США |
-| 🇺🇿 | `uz` | Узбекистан |
-| 🇹🇷 | `tr` | Турция |
-| 🇱🇻 | `lv` | Латвия |
+| Code | Country |
+|------|---------|
+| `ru` | Russia |
+| `kz` | Kazakhstan |
+| `by` | Belarus |
+| `us` | United States |
+| `uz` | Uzbekistan |
+| `tr` | Turkey |
+| `lv` | Latvia |
 
 ---
 
-## 📖 API
+## 📖 API Reference
 
-Все методы доступны на обоих клиентах: `ProdCalendar` (async) и `SyncProdCalendar` (sync).
+All methods are available on both `ProdCalendar` (async) and `SyncProdCalendar` (sync).
 
-### Параметры
+### Parameters
 
-| Параметр | Тип | По умолчанию | Описание |
-|----------|-----|--------------|----------|
-| `locale` | `str` | `"ru"` | Код страны |
-| `pre` | `bool` | `False` | Отмечать сокращённые предпраздничные дни |
-| `covid` | `bool` | `False` | Отмечать рабочие дни из‑за COVID‑19 |
-| `sd` | `bool` | `False` | Шестидневная рабочая неделя |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `locale` | `str` | `"ru"` | Country code |
+| `pre` | `bool` | `False` | Mark shortened pre‑holiday days |
+| `covid` | `bool` | `False` | Mark working days due to COVID‑19 |
+| `sd` | `bool` | `False` | Consider 6‑day work week |
 
-### Методы
+### Methods
 
 ```python
 # ── Async ──
@@ -111,26 +115,26 @@ calendar.range_date(date(2024, 1, 1), date(2024, 5, 1))
 calendar.is_leap(date(2024, 1, 1))
 ```
 
-### Типы возвращаемых значений
+### Return Types
 
-| Метод | Возвращает |
-|-------|-----------|
+| Method | Returns |
+|---|---|
 | `today()` / `tomorrow()` / `date()` | `DateType` (enum) |
-| `month()` / `year()` / `range_date()` | `dict[str, DateType]` — ISO‑дата → тип |
+| `month()` / `year()` / `range_date()` | `dict[str, DateType]` — ISO date → type |
 | `is_leap()` | `bool` |
 
-### DateType
+### DateType Enum
 
-| Значение | Значение | Цвет |
-|----------|----------|------|
-| `DateType.WORKING` (0) | Рабочий день | ✅ |
-| `DateType.NOT_WORKING` (1) | Выходной / праздник | 🚫 |
-| `DateType.SHORTENED` (2) | Сокращённый предпраздничный | ⏳ |
-| `DateType.WORKING_DAY` (4) | Рабочий (особый период, COVID) | 🏥 |
+| Value | Meaning |
+|---|---|
+| `DateType.WORKING` (0) | Working day |
+| `DateType.NOT_WORKING` (1) | Day off / holiday |
+| `DateType.SHORTENED` (2) | Shortened pre‑holiday day |
+| `DateType.WORKING_DAY` (4) | Working day (special period, e.g. COVID) |
 
 ---
 
-## 📋 Пример
+## 📋 Full Example
 
 ```python
 import asyncio
@@ -142,7 +146,7 @@ async def main():
     async with ProdCalendar(locale="us") as calendar:
         month_data = await calendar.month(date(2024, 8, 1), locale="ru")
         days_off = sum(1 for v in month_data.values() if v == DateType.NOT_WORKING)
-        print(f"🇷🇺 Выходных в августе 2024: {days_off}")
+        print(f"Days off in August 2024 (RU): {days_off}")
 
 
 asyncio.run(main())
@@ -150,37 +154,48 @@ asyncio.run(main())
 
 ---
 
-## 🛠 Разработка
+## 🛠 Development
 
 ```bash
-# Установка зависимостей
+# Install dependencies
 uv sync
 
-# Модульные тесты (без обращений к API)
+# Run unit tests (mocked, no API calls)
 uv run pytest
 
-# Интеграционные тесты (реальное API)
+# Run integration tests (real API calls)
 uv run pytest -m integration
 
-# Сборка пакета
+# Build package
 uv build
 ```
 
-### Структура тестов
+### Test Suite
 
-| Тип | Кол‑во | Команда |
-|-----|--------|---------|
-| 🔬 Модульные | 40 | `uv run pytest` |
-| 🌐 Интеграционные | 8 | `uv run pytest -m integration` |
+| Type | Count | Command |
+|------|-------|---------|
+| 🔬 Unit | 40 | `uv run pytest` |
+| 🌐 Integration | 8 | `uv run pytest -m integration` |
 
 ---
 
-## 📄 Лицензия
+## 🔗 Links
 
-[MIT](LICENSE) © 2021 Максим Кобылинский · © 2026 [Aleksandr Bevz](https://github.com/asbevz)
+- **Original project:** [kobylinsky-m/isdayoff](https://github.com/kobylinsky-m/isdayoff)
+- **API documentation:** [isdayoff.ru/docs](https://www.isdayoff.ru/docs/)
+- **Database of countries:** [isdayoff.ru/db](https://www.isdayoff.ru/db/)
+- **PyPI:** [isdayoff-api](https://pypi.org/project/isdayoff-api/)
+
+---
+
+## 📄 License
+
+[MIT](LICENSE)
+
+© 2021 Maxim Kobylinsky (original author) · © 2026 [Aleksandr Bevz](https://github.com/asbevz)
 
 ---
 
 <div align="center">
-<small>Данные предоставлены <a href="https://isdayoff.ru">isdayoff.ru</a></small>
+<small>Data provided by <a href="https://isdayoff.ru">isdayoff.ru</a></small>
 </div>
