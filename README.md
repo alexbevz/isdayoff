@@ -187,6 +187,20 @@ uv build
 
 ---
 
+## ☕ Donate
+
+If this library saves you time or helps your business, consider supporting its development:
+
+| Crypto | Address |
+|--------|---------|
+| ₿ Bitcoin (BTC) | `bc1q98gg278ywqdfhmxpfttuvsyskdxxmg0ac4sg5a` |
+| ◉ USDT (TRC-20) | `TFf8jHqaoTWEEx6XzHTdRpLkMcYcwwRd17` |
+| ◎ USDT (Solana) | `8SZc4jQoMKQeedJMe9VS5bnrWF8PCKvDjwixz3Zg4p2W` |
+
+Your support keeps the project alive and up to date ❤️
+
+---
+
 ## 📄 License
 
 [MIT](LICENSE)
