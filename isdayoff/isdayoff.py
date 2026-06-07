@@ -15,7 +15,7 @@ from .typingapi import (
 
 _DELIMITER = "%7C"
 _FORMAT_DATE = "%Y%m%d"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 # ── shared helpers ───────────────────────────────────────────────────────────
